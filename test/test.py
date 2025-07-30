@@ -1,40 +1,41 @@
 # SPDX-FileCopyrightText: © 2024 Tiny Tapeout
 # SPDX-License-Identifier: Apache-2.0
-
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import ClockCycles, RisingEdge
 
 
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_sram_bist_io(dut):
+    dut._log.info("Starting SRAM BIST Test")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, units="us")
+    # Create and start a clock
+    clock = Clock(dut.clk, 10, units="ns")  # 100 MHz clock
     cocotb.start_soon(clock.start())
 
-    # Reset
-    dut._log.info("Reset")
-    dut.ena.value = 1
-    dut.ui_in.value = 0
-    dut.uio_in.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    dut.rst_n.value = 1
+    # Apply reset
+    dut.rst.value = 1
+    dut.in_.value = 0  # avoid in keyword conflict in Python
+    await ClockCycles(dut.clk, 5)
+    dut.rst.value = 0
+    await ClockCycles(dut.clk, 2)
 
-    dut._log.info("Test project behavior")
-
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
-
-    # Wait for one clock cycle to see the output values
+    dut._log.info("Triggering BIST")
+    # Set in[5] = 1 to start BIST
+    dut.in_.value = 0b0010_0000
     await ClockCycles(dut.clk, 1)
+    dut.in_.value = 0  # Clear the start signal
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # Wait for DONE state to complete
+    while dut.out.value.integer & 0b00000001 == 0:
+        await ClockCycles(dut.clk, 1)
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    bist_done = dut.out.value.integer & 0b00000001
+    bist_fail = (dut.out.value.integer >> 1) & 0b1
+
+    dut._log.info(f"BIST done: {bist_done}, fail: {bist_fail}")
+
+    assert bist_done == 1, "BIST did not complete as expected"
+    assert bist_fail == 0, "BIST failed unexpectedly"
+
+    dut._log.info("SRAM BIST Test Passed")

@@ -23,16 +23,33 @@ module tb ();
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
 
-  // Replace tt_um_example with your module name:
-  tt_um_example user_project (
-      .ui_in  (ui_in),    // Dedicated inputs
-      .uo_out (uo_out),   // Dedicated outputs
-      .uio_in (uio_in),   // IOs: Input path
-      .uio_out(uio_out),  // IOs: Output path
-      .uio_oe (uio_oe),   // IOs: Enable path (active high: 0=input, 1=output)
-      .ena    (ena),      // enable - goes high when design is selected
-      .clk    (clk),      // clock
-      .rst_n  (rst_n)     // not reset
+  // Clock generation
+  initial begin
+    clk = 0;
+    forever #5 clk = ~clk; // 100MHz clock
+  end
+
+  // Replace tt_um_sram_bist with your SRAM BIST module name
+  tt_um_bist user_project (
+      .ui_in   (ui_in),    // Dedicated inputs
+      .uo_out  (uo_out),   // Dedicated outputs
+      .uio_in  (uio_in),   // IOs: Input path
+      .uio_out (uio_out),  // IOs: Output path
+      .uio_oe  (uio_oe),   // IOs: Enable path (active high: 0=input, 1=output)
+      .ena     (ena),      // enable - goes high when design is selected
+      .clk     (clk),      // clock
+      .rst_n   (rst_n)     // not reset
   );
+
+  // Initial values
+  initial begin
+    // Initialize control signals
+    ui_in   = 8'b00000000;
+    uio_in  = 8'b00000000;
+    ena     = 1'b1;
+    rst_n   = 1'b0;
+    #20;
+    rst_n   = 1'b1;
+  end
 
 endmodule

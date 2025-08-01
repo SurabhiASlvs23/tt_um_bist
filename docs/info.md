@@ -14,7 +14,7 @@ Special thanks to Dr. K. S. Geetha (Vice Principal) and Dr. K. N. Subramanya (Pr
 
 ## How it works
 
-The tt_um_sram_bist module implements a basic Built-In Self-Test (BIST) mechanism for an 8-bit × 16-word internal SRAM. It uses a simple Finite State Machine (FSM) to write and read test patterns from the SRAM to verify memory integrity.
+The tt_um_bist module implements a basic Built-In Self-Test (BIST) mechanism for an 8-bit × 16-word internal SRAM. It uses a simple Finite State Machine (FSM) to write and read test patterns from the SRAM to verify memory integrity.
 
 The input control bus ui_in is structured as:
 - [7] → start: Initiates the BIST process.
